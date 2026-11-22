@@ -13,23 +13,40 @@
   select, button { font-size: 16px; padding: 8px 10px; border-radius: 8px; border: 1px solid #bbb; background: #fff; }
   button { cursor: pointer; }
   .spacer { flex: 1; }
-  .tabs { display: flex; gap: 6px; padding: 10px 14px 0; }
+  .tabs { display: flex; gap: 6px; padding: 10px 14px 0; flex-wrap: wrap; }
   .tabs button.on { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
   .summary { padding: 8px 14px; font-size: 15px; color: #444; }
   .bar { height: 8px; background: #ddd; border-radius: 4px; margin: 0 14px; overflow: hidden; }
   .bar > div { height: 100%; background: #2e8b57; width: 0; transition: width .3s; }
-  .chapnav { display: flex; align-items: center; gap: 8px; padding: 12px 14px; }
-  .chapnav .title { font-size: 20px; font-weight: 700; flex: 1; text-align: center; }
-  .verses { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; padding: 6px 14px 30px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px 10px; font-size: 12px; align-items: center; }
+  .legend span.sw { display: inline-block; width: 22px; height: 16px; border-radius: 4px; text-align: center; font-size: 11px; line-height: 16px; }
+
+  /* 한 권 보기 */
+  .chapter { padding: 0 14px; scroll-margin-top: 70px; }
+  .chapter h2 { font-size: 17px; margin: 18px 0 8px; display: flex; align-items: center; gap: 10px; }
+  .chapter h2 .mini { font-size: 12px; font-weight: 400; color: #666; }
+  .verses { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
   .v { position: relative; height: 64px; border-radius: 10px; border: 1px solid rgba(0,0,0,.12); display: flex; flex-direction: column; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
   .v .n { font-size: 18px; font-weight: 600; }
   .v .c { font-size: 12px; opacity: .85; min-height: 14px; }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; font-size: 12px; align-items: center; }
-  .legend span.sw { display: inline-block; width: 22px; height: 16px; border-radius: 4px; text-align: center; font-size: 11px; line-height: 16px; }
-  .chgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; padding: 6px 14px 30px; }
-  .ch { height: 56px; border-radius: 10px; border: 1px solid rgba(0,0,0,.12); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .ch .n { font-weight: 600; }
-  .ch .p { font-size: 11px; opacity: .85; }
+  .bottom-space { height: 60px; }
+
+  /* 장 바로가기 */
+  .jump { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px 0; }
+  .jump .jb { min-width: 40px; height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,.12); font-size: 14px; display: flex; align-items: center; justify-content: center; }
+
+  /* 전체 현황 */
+  .books { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px 14px 30px; }
+  .bk { border-radius: 12px; border: 1px solid rgba(0,0,0,.12); padding: 10px; cursor: pointer; }
+  .bk .t { font-weight: 700; font-size: 15px; }
+  .bk .s { font-size: 12px; margin-top: 2px; opacity: .9; }
+  .bk .pb { height: 6px; border-radius: 3px; background: rgba(0,0,0,.18); margin-top: 8px; overflow: hidden; }
+  .bk .pb > div { height: 100%; background: rgba(255,255,255,.95); }
+  .group-title { padding: 14px 14px 0; font-weight: 700; font-size: 16px; }
+  .total { padding: 12px 14px 0; }
+  .total .big { font-size: 22px; font-weight: 700; }
+  .total .sub { font-size: 14px; color: #555; margin-top: 2px; }
+
   dialog { border: none; border-radius: 14px; padding: 20px; width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
   dialog input { width: 100%; font-size: 24px; padding: 10px; text-align: center; margin: 10px 0; border-radius: 8px; border: 1px solid #bbb; }
   dialog .row { display: flex; gap: 8px; }
@@ -46,26 +63,33 @@
   <input type="file" id="importFile" accept="application/json" style="display:none">
 </header>
 
-<div class="summary" id="summary"></div>
-<div class="bar"><div id="barFill"></div></div>
+<div class="tabs">
+  <button id="tabBook" class="on">한 권 보기</button>
+  <button id="tabAll">전체 현황</button>
+</div>
 
 <div class="legend" id="legend"></div>
 
-<div class="tabs">
-  <button id="tabVerse" class="on">절 체크</button>
-  <button id="tabBook">이 권의 장별 현황</button>
+<!-- 한 권 보기 -->
+<div id="bookView">
+  <div class="summary" id="summary"></div>
+  <div class="bar"><div id="barFill"></div></div>
+  <div class="jump" id="jump"></div>
+  <div id="chapters"></div>
+  <div class="bottom-space"></div>
 </div>
 
-<div id="verseView">
-  <div class="chapnav">
-    <button id="prev">◀</button>
-    <div class="title" id="chTitle"></div>
-    <button id="next">▶</button>
+<!-- 전체 현황 -->
+<div id="allView" style="display:none">
+  <div class="total">
+    <div class="big" id="totalBig"></div>
+    <div class="sub" id="totalSub"></div>
   </div>
-  <div class="verses" id="verses"></div>
-</div>
-<div id="bookView" style="display:none">
-  <div class="chgrid" id="chgrid"></div>
+  <div class="bar" style="margin-top:10px"><div id="totalBar"></div></div>
+  <div class="group-title">구약</div>
+  <div class="books" id="otBooks"></div>
+  <div class="group-title">신약</div>
+  <div class="books" id="ntBooks"></div>
 </div>
 
 <dialog id="dlg">
@@ -147,8 +171,9 @@ const BIBLE = [
 ["유다서",[25]],
 ["요한계시록",[20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21]]
 ];
+const OT_COUNT = 39;
 
-// ===== 색상: 0회=회색, 1~10회=초록→진한 남색, 10회 이상은 같은 색 =====
+// ===== 색상: 0회=흰색, 1~10회=초록→진한 남색, 10회 이상은 같은 색 =====
 const COLORS = [
   {bg:'#ffffff', fg:'#999'},   // 0
   {bg:'#d4edda', fg:'#222'},   // 1
@@ -164,7 +189,7 @@ const COLORS = [
 ];
 const colorOf = n => COLORS[Math.min(n, 10)];
 
-// ===== 저장소 =====
+// ===== 저장소 (기존 기록 그대로 사용) =====
 const KEY = 'bibleReadingChecks_v1';
 let data = JSON.parse(localStorage.getItem(KEY) || '{}');
 const save = () => localStorage.setItem(KEY, JSON.stringify(data));
@@ -177,8 +202,6 @@ function setCount(b, c, v, n) {
 
 // ===== 상태 =====
 let book = Number(localStorage.getItem('lastBook') || 0);
-let chap = Number(localStorage.getItem('lastChap') || 0);
-
 const $ = id => document.getElementById(id);
 const bookSel = $('bookSel');
 BIBLE.forEach((b, i) => {
@@ -202,34 +225,31 @@ BIBLE.forEach((b, i) => {
   }
 })();
 
-function renderSummary() {
-  let total = 0, read = 0, sum = 0;
-  BIBLE[book][1].forEach((cnt, ci) => {
-    for (let v = 1; v <= cnt; v++) {
-      total++;
-      const n = getCount(book, ci, v);
-      if (n > 0) read++;
-      sum += n;
-    }
-  });
-  const pct = total ? Math.round(read / total * 100) : 0;
-  $('summary').textContent = `${BIBLE[book][0]}: ${read} / ${total}절 읽음 (${pct}%) · 누적 ${sum}회`;
-  $('barFill').style.width = pct + '%';
-}
-
-function renderVerses() {
-  const [name, chapters] = BIBLE[book];
-  if (chap >= chapters.length) chap = chapters.length - 1;
-  if (chap < 0) chap = 0;
-  $('chTitle').textContent = `${name} ${chap + 1}장`;
-  const box = $('verses');
-  box.innerHTML = '';
-  for (let v = 1; v <= chapters[chap]; v++) {
-    box.appendChild(makeVerse(v));
+// ===== 통계 계산 =====
+// 한 장: 읽은 절 수, 전체 절 수, 가장 적게 읽은 절의 횟수, 누적 횟수
+function chapterStats(b, ci) {
+  const cnt = BIBLE[b][1][ci];
+  let read = 0, min = Infinity, sum = 0;
+  for (let v = 1; v <= cnt; v++) {
+    const n = getCount(b, ci, v);
+    if (n > 0) read++;
+    if (n < min) min = n;
+    sum += n;
   }
-  renderSummary();
+  return {read, total: cnt, min: min === Infinity ? 0 : min, sum};
+}
+// 한 권
+function bookStats(b) {
+  let read = 0, total = 0, min = Infinity, sum = 0;
+  BIBLE[b][1].forEach((_, ci) => {
+    const s = chapterStats(b, ci);
+    read += s.read; total += s.total; sum += s.sum;
+    if (s.min < min) min = s.min;
+  });
+  return {read, total, min: min === Infinity ? 0 : min, sum};
 }
 
+// ===== 한 권 보기 =====
 function paint(el, n) {
   const c = colorOf(n);
   el.style.background = c.bg;
@@ -237,31 +257,31 @@ function paint(el, n) {
   el.querySelector('.c').textContent = n > 0 ? n + '회' : '';
 }
 
-function makeVerse(v) {
+function makeVerse(b, ci, v, onChange) {
   const el = document.createElement('div');
   el.className = 'v';
   el.innerHTML = `<div class="n">${v}</div><div class="c"></div>`;
-  paint(el, getCount(book, chap, v));
+  paint(el, getCount(b, ci, v));
 
   let timer = null, long = false;
   const start = () => {
     long = false;
     timer = setTimeout(() => {
       long = true;
-      openDialog(`${BIBLE[book][0]} ${chap + 1}:${v}`, getCount(book, chap, v), n => {
-        setCount(book, chap, v, n);
+      openDialog(`${BIBLE[b][0]} ${ci + 1}:${v}`, getCount(b, ci, v), n => {
+        setCount(b, ci, v, n);
         paint(el, n);
-        renderSummary();
+        onChange();
       });
     }, 500);
   };
   const end = () => {
     clearTimeout(timer);
     if (!long) {
-      const n = getCount(book, chap, v) + 1;
-      setCount(book, chap, v, n);
+      const n = getCount(b, ci, v) + 1;
+      setCount(b, ci, v, n);
       paint(el, n);
-      renderSummary();
+      onChange();
     }
   };
   const cancel = () => { clearTimeout(timer); long = true; };
@@ -276,38 +296,111 @@ function makeVerse(v) {
   return el;
 }
 
+function renderBookSummary() {
+  const s = bookStats(book);
+  const pct = s.total ? Math.round(s.read / s.total * 100) : 0;
+  $('summary').textContent = `${BIBLE[book][0]}: ${s.read} / ${s.total}절 읽음 (${pct}%) · 누적 ${s.sum}회`;
+  $('barFill').style.width = pct + '%';
+}
+
+function refreshChapterHeader(ci) {
+  const s = chapterStats(book, ci);
+  const mini = document.getElementById('mini-' + ci);
+  if (mini) mini.textContent = `${s.read}/${s.total}절`;
+  const jb = document.getElementById('jb-' + ci);
+  if (jb) {
+    const c = colorOf(s.min);
+    jb.style.background = c.bg;
+    jb.style.color = c.fg;
+  }
+}
+
 function renderBook() {
   const [name, chapters] = BIBLE[book];
-  const g = $('chgrid');
-  g.innerHTML = '';
+  const jump = $('jump');
+  const box = $('chapters');
+  jump.innerHTML = '';
+  box.innerHTML = '';
+
   chapters.forEach((cnt, ci) => {
-    let min = Infinity, read = 0;
+    // 바로가기 버튼
+    const jb = document.createElement('div');
+    jb.className = 'jb';
+    jb.id = 'jb-' + ci;
+    jb.textContent = ci + 1;
+    jb.onclick = () => {
+      document.getElementById('ch-' + ci).scrollIntoView({behavior: 'smooth'});
+    };
+    jump.appendChild(jb);
+
+    // 장 영역
+    const sec = document.createElement('div');
+    sec.className = 'chapter';
+    sec.id = 'ch-' + ci;
+    sec.innerHTML = `<h2>${name} ${ci + 1}장 <span class="mini" id="mini-${ci}"></span></h2>`;
+    const grid = document.createElement('div');
+    grid.className = 'verses';
     for (let v = 1; v <= cnt; v++) {
-      const n = getCount(book, ci, v);
-      if (n > 0) read++;
-      if (n < min) min = n;
+      grid.appendChild(makeVerse(book, ci, v, () => {
+        refreshChapterHeader(ci);
+        renderBookSummary();
+      }));
     }
-    // 장 전체 색 = 그 장에서 가장 적게 읽은 절의 횟수 (모든 절을 최소 N번 읽었다는 뜻)
-    const c = colorOf(min);
+    sec.appendChild(grid);
+    box.appendChild(sec);
+    refreshChapterHeader(ci);
+  });
+  renderBookSummary();
+}
+
+// ===== 전체 현황 =====
+function renderAll() {
+  let gRead = 0, gTotal = 0, gSum = 0, booksDone = 0;
+  const ot = $('otBooks'), nt = $('ntBooks');
+  ot.innerHTML = ''; nt.innerHTML = '';
+
+  BIBLE.forEach((b, bi) => {
+    const s = bookStats(bi);
+    gRead += s.read; gTotal += s.total; gSum += s.sum;
+    if (s.read === s.total) booksDone++;
+    const pct = s.total ? Math.round(s.read / s.total * 100) : 0;
+    // 권 전체 색 = 그 권에서 가장 적게 읽은 절의 횟수
+    const c = colorOf(s.min);
     const el = document.createElement('div');
-    el.className = 'ch';
+    el.className = 'bk';
     el.style.background = c.bg;
     el.style.color = c.fg;
-    el.innerHTML = `<div class="n">${ci + 1}장</div><div class="p">${read}/${cnt}</div>`;
-    el.onclick = () => { chap = ci; localStorage.setItem('lastChap', chap); showTab('verse'); renderVerses(); };
-    g.appendChild(el);
+    el.innerHTML = `<div class="t">${b[0]}</div>` +
+      `<div class="s">${pct}% · ${s.read}/${s.total}절</div>` +
+      `<div class="pb"><div style="width:${pct}%;${s.min === 0 ? 'background:#2e8b57' : ''}"></div></div>`;
+    el.onclick = () => {
+      book = bi;
+      bookSel.value = bi;
+      localStorage.setItem('lastBook', bi);
+      showTab('book');
+      renderBook();
+      window.scrollTo(0, 0);
+    };
+    (bi < OT_COUNT ? ot : nt).appendChild(el);
   });
+
+  const pct = gTotal ? (gRead / gTotal * 100) : 0;
+  $('totalBig').textContent = `성경 전체 ${pct.toFixed(1)}% 읽음`;
+  $('totalSub').textContent = `${gRead.toLocaleString()} / ${gTotal.toLocaleString()}절 · 완독한 권 ${booksDone}/66 · 누적 ${gSum.toLocaleString()}회`;
+  $('totalBar').style.width = pct + '%';
+  $('totalBar').style.height = '100%';
+  $('totalBar').style.background = '#2e8b57';
 }
 
 function showTab(t) {
-  $('verseView').style.display = t === 'verse' ? '' : 'none';
   $('bookView').style.display = t === 'book' ? '' : 'none';
-  $('tabVerse').classList.toggle('on', t === 'verse');
+  $('allView').style.display = t === 'all' ? '' : 'none';
   $('tabBook').classList.toggle('on', t === 'book');
-  if (t === 'book') renderBook();
+  $('tabAll').classList.toggle('on', t === 'all');
+  if (t === 'all') renderAll();
 }
 
-// 숫자 입력 창
+// ===== 숫자 입력 창 =====
 let dlgCb = null;
 function openDialog(title, cur, cb) {
   $('dlgTitle').textContent = title + ' 읽은 횟수 (0이면 해제)';
@@ -323,22 +416,16 @@ $('dlgOk').onclick = () => {
   if (dlgCb) dlgCb(n);
 };
 
-// 이벤트
-bookSel.onchange = () => { book = Number(bookSel.value); chap = 0; localStorage.setItem('lastBook', book); localStorage.setItem('lastChap', chap); renderVerses(); if ($('bookView').style.display !== 'none') renderBook(); };
-$('prev').onclick = () => {
-  if (chap > 0) chap--;
-  else if (book > 0) { book--; chap = BIBLE[book][1].length - 1; bookSel.value = book; }
-  localStorage.setItem('lastBook', book); localStorage.setItem('lastChap', chap);
-  renderVerses();
+// ===== 이벤트 =====
+bookSel.onchange = () => {
+  book = Number(bookSel.value);
+  localStorage.setItem('lastBook', book);
+  showTab('book');
+  renderBook();
+  window.scrollTo(0, 0);
 };
-$('next').onclick = () => {
-  if (chap < BIBLE[book][1].length - 1) chap++;
-  else if (book < BIBLE.length - 1) { book++; chap = 0; bookSel.value = book; }
-  localStorage.setItem('lastBook', book); localStorage.setItem('lastChap', chap);
-  renderVerses();
-};
-$('tabVerse').onclick = () => showTab('verse');
-$('tabBook').onclick = () => showTab('book');
+$('tabBook').onclick = () => { showTab('book'); };
+$('tabAll').onclick = () => { showTab('all'); };
 
 // 내보내기 / 불러오기
 $('exportBtn').onclick = () => {
@@ -357,7 +444,8 @@ $('importFile').onchange = e => {
     try {
       const obj = JSON.parse(r.result);
       if (confirm('현재 기록을 이 파일의 내용으로 바꿉니다. 계속할까요?')) {
-        data = obj; save(); renderVerses();
+        data = obj; save(); renderBook();
+        if ($('allView').style.display !== 'none') renderAll();
       }
     } catch (err) { alert('파일을 읽을 수 없습니다.'); }
   };
@@ -367,7 +455,7 @@ $('importFile').onchange = e => {
 
 // 시작
 bookSel.value = book;
-renderVerses();
+renderBook();
 </script>
 </body>
 </html>
