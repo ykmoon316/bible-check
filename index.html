@@ -4,68 +4,142 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fff4f0">
 <title>성경 읽기 체크</title>
 <style>
+  :root {
+    --bg: #fff8f3;
+    --card: #ffffff;
+    --ink: #4a3f45;
+    --sub: #9a8b92;
+    --line: #f3e3dc;
+    --accent: #ff9eb5;
+    --accent2: #ffc9a8;
+    --shadow: 0 3px 10px rgba(255, 158, 181, .18);
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; background: #f5f5f4; color: #222; }
-  header { position: sticky; top: 0; z-index: 5; background: #fff; border-bottom: 1px solid #ddd; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  header h1 { font-size: 18px; margin: 0 8px 0 0; }
-  select, button { font-size: 16px; padding: 8px 10px; border-radius: 8px; border: 1px solid #bbb; background: #fff; }
-  button { cursor: pointer; }
-  .spacer { flex: 1; }
-  .tabs { display: flex; gap: 6px; padding: 10px 14px 0; flex-wrap: wrap; }
-  .tabs button.on { background: #1e3a5f; color: #fff; border-color: #1e3a5f; }
-  .summary { padding: 8px 14px; font-size: 15px; color: #444; }
-  .bar { height: 8px; background: #ddd; border-radius: 4px; margin: 0 14px; overflow: hidden; }
-  .bar > div { height: 100%; background: #2e8b57; width: 0; transition: width .3s; }
-  .legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 14px 10px; font-size: 12px; align-items: center; }
-  .legend span.sw { display: inline-block; width: 22px; height: 16px; border-radius: 4px; text-align: center; font-size: 11px; line-height: 16px; }
+  body {
+    margin: 0;
+    font-family: 'Jua', 'Apple SD Gothic Neo', 'Nanum Gothic', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
 
-  /* 한 권 보기 */
-  .chapter { padding: 0 14px; scroll-margin-top: 70px; }
-  .chapter h2 { font-size: 17px; margin: 18px 0 8px; display: flex; align-items: center; gap: 10px; }
-  .chapter h2 .mini { font-size: 12px; font-weight: 400; color: #666; }
-  .verses { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
-  .v { position: relative; height: 64px; border-radius: 10px; border: 1px solid rgba(0,0,0,.12); display: flex; flex-direction: column; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-  .v .n { font-size: 18px; font-weight: 600; }
-  .v .c { font-size: 12px; opacity: .85; min-height: 14px; }
-  .bottom-space { height: 60px; }
+  /* 상단 */
+  header {
+    position: sticky; top: 0; z-index: 5;
+    background: rgba(255, 248, 243, .94);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-bottom: 2px dashed var(--line);
+    padding: 10px 14px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  header h1 { font-size: 20px; margin: 0 6px 0 0; letter-spacing: -0.5px; }
+  select, button {
+    font-family: inherit; font-size: 15px; color: var(--ink);
+    padding: 7px 12px; border-radius: 999px;
+    border: 2px solid var(--line); background: var(--card);
+    box-shadow: var(--shadow);
+  }
+  select { max-width: 150px; }
+  button { cursor: pointer; }
+  button:active { transform: scale(.96); }
+  .spacer { flex: 1; }
+  .mini-btn { font-size: 13px; padding: 6px 10px; box-shadow: none; }
+
+  .tabs { display: flex; gap: 8px; padding: 12px 14px 0; }
+  .tabs button { flex: 1; box-shadow: none; }
+  .tabs button.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+    padding: 10px 14px 4px; font-size: 12px; color: var(--sub);
+  }
+  .legend .sw {
+    display: inline-block; min-width: 24px; height: 18px; padding: 0 4px;
+    border-radius: 999px; text-align: center; font-size: 11px; line-height: 17px;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+
+  .summary { padding: 12px 16px 6px; font-size: 15px; }
+  .bar { height: 12px; background: #ffe9e2; border-radius: 999px; margin: 0 16px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ffc9a8, #ff9eb5); transition: width .35s; }
 
   /* 장 바로가기 */
-  .jump { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px 0; }
-  .jump .jb { min-width: 40px; height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid rgba(0,0,0,.12); font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .jump { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 14px 0; }
+  .jb {
+    min-width: 34px; height: 30px; padding: 0 8px; border-radius: 999px;
+    border: 1.5px solid rgba(0,0,0,.08); font-size: 13px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+
+  /* 한 권 보기 */
+  .chapter {
+    margin: 14px 12px 0; padding: 12px 12px 14px;
+    background: var(--card); border-radius: 20px; box-shadow: var(--shadow);
+    scroll-margin-top: 76px;
+  }
+  .chapter h2 { font-size: 16px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .chapter h2::before { content: '🌱'; font-size: 15px; }
+  .chapter h2 .mini { font-size: 12px; font-weight: 400; color: var(--sub); margin-left: auto; }
+
+  /* 절 칸: 기존 64px → 38px (약 40% 축소) */
+  .verses { display: grid; grid-template-columns: repeat(auto-fill, 38px); gap: 5px; }
+  .v {
+    width: 38px; height: 38px; border-radius: 12px;
+    border: 1.5px solid rgba(0,0,0,.07);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    transition: transform .08s;
+  }
+  .v:active { transform: scale(.88); }
+  .v .n { font-size: 14px; line-height: 1; }
+  .v .c { font-size: 9px; line-height: 1; margin-top: 2px; min-height: 9px; opacity: .85; }
+  .bottom-space { height: 60px; }
 
   /* 전체 현황 */
-  .books { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px 14px 30px; }
-  .bk { border-radius: 12px; border: 1px solid rgba(0,0,0,.12); padding: 10px; cursor: pointer; }
-  .bk .t { font-weight: 700; font-size: 15px; }
-  .bk .s { font-size: 12px; margin-top: 2px; opacity: .9; }
-  .bk .pb { height: 6px; border-radius: 3px; background: rgba(0,0,0,.18); margin-top: 8px; overflow: hidden; }
-  .bk .pb > div { height: 100%; background: rgba(255,255,255,.95); }
-  .group-title { padding: 14px 14px 0; font-weight: 700; font-size: 16px; }
-  .total { padding: 12px 14px 0; }
-  .total .big { font-size: 22px; font-weight: 700; }
-  .total .sub { font-size: 14px; color: #555; margin-top: 2px; }
+  .total {
+    margin: 14px 12px 0; padding: 16px; border-radius: 22px; text-align: center;
+    background: linear-gradient(135deg, #ffe3ec, #ffeede); box-shadow: var(--shadow);
+  }
+  .total .big { font-size: 24px; }
+  .total .sub { font-size: 13px; color: var(--sub); margin-top: 4px; }
+  .total .bar { margin: 12px 0 0; background: rgba(255,255,255,.7); }
+  .group-title { padding: 18px 18px 0; font-size: 17px; }
+  .books { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px 12px 14px; }
+  .bk {
+    border-radius: 18px; padding: 11px 12px; cursor: pointer;
+    border: 1.5px solid rgba(0,0,0,.07); box-shadow: var(--shadow);
+  }
+  .bk:active { transform: scale(.97); }
+  .bk .t { font-size: 15px; }
+  .bk .s { font-size: 11px; margin-top: 3px; opacity: .85; }
+  .bk .pb { height: 7px; border-radius: 999px; background: rgba(0,0,0,.1); margin-top: 8px; overflow: hidden; }
+  .bk .pb > div { height: 100%; border-radius: 999px; background: #ff9eb5; }
 
-  dialog { border: none; border-radius: 14px; padding: 20px; width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
-  dialog input { width: 100%; font-size: 24px; padding: 10px; text-align: center; margin: 10px 0; border-radius: 8px; border: 1px solid #bbb; }
+  /* 숫자 입력 창 */
+  dialog { border: none; border-radius: 24px; padding: 22px; width: 300px; box-shadow: 0 12px 40px rgba(120, 80, 90, .3); background: var(--card); color: var(--ink); font-family: inherit; }
+  dialog::backdrop { background: rgba(74, 63, 69, .35); }
+  dialog input { width: 100%; font-family: inherit; font-size: 26px; padding: 10px; text-align: center; margin: 12px 0; border-radius: 16px; border: 2px solid var(--line); color: var(--ink); }
   dialog .row { display: flex; gap: 8px; }
   dialog .row button { flex: 1; }
+  dialog .ok { background: var(--accent); border-color: var(--accent); color: #fff; }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 </head>
 <body>
 <header>
-  <h1>성경 읽기 체크</h1>
+  <h1>🌸 성경 읽기 체크</h1>
   <select id="bookSel"></select>
   <span class="spacer"></span>
-  <button id="exportBtn">내보내기</button>
-  <button id="importBtn">불러오기</button>
+  <button id="exportBtn" class="mini-btn">내보내기</button>
+  <button id="importBtn" class="mini-btn">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none">
 </header>
 
 <div class="tabs">
-  <button id="tabBook" class="on">한 권 보기</button>
-  <button id="tabAll">전체 현황</button>
+  <button id="tabBook" class="on">📖 한 권 보기</button>
+  <button id="tabAll">🌈 전체 현황</button>
 </div>
 
 <div class="legend" id="legend"></div>
@@ -84,20 +158,21 @@
   <div class="total">
     <div class="big" id="totalBig"></div>
     <div class="sub" id="totalSub"></div>
+    <div class="bar"><div id="totalBar"></div></div>
   </div>
-  <div class="bar" style="margin-top:10px"><div id="totalBar"></div></div>
-  <div class="group-title">구약</div>
+  <div class="group-title">🌿 구약</div>
   <div class="books" id="otBooks"></div>
-  <div class="group-title">신약</div>
+  <div class="group-title">🌷 신약</div>
   <div class="books" id="ntBooks"></div>
+  <div class="bottom-space"></div>
 </div>
 
 <dialog id="dlg">
-  <div id="dlgTitle" style="font-weight:700"></div>
+  <div id="dlgTitle"></div>
   <input type="number" id="dlgInput" min="0" inputmode="numeric">
   <div class="row">
     <button id="dlgCancel">취소</button>
-    <button id="dlgOk" style="background:#1e3a5f;color:#fff">확인</button>
+    <button id="dlgOk" class="ok">확인</button>
   </div>
 </dialog>
 
@@ -173,19 +248,19 @@ const BIBLE = [
 ];
 const OT_COUNT = 39;
 
-// ===== 색상: 0회=흰색, 1~10회=초록→진한 남색, 10회 이상은 같은 색 =====
+// ===== 파스텔 색상: 0회=흰색, 1~10회, 10회 이상은 같은 색 =====
 const COLORS = [
-  {bg:'#ffffff', fg:'#999'},   // 0
-  {bg:'#d4edda', fg:'#222'},   // 1
-  {bg:'#a8dcb5', fg:'#222'},   // 2
-  {bg:'#7ccbc0', fg:'#222'},   // 3
-  {bg:'#56b4d3', fg:'#222'},   // 4
-  {bg:'#3a93d1', fg:'#fff'},   // 5
-  {bg:'#3a6fc4', fg:'#fff'},   // 6
-  {bg:'#4b55b5', fg:'#fff'},   // 7
-  {bg:'#5a3fa0', fg:'#fff'},   // 8
-  {bg:'#4a2f85', fg:'#fff'},   // 9
-  {bg:'#1e2a5e', fg:'#fff'}    // 10+
+  {bg:'#ffffff', fg:'#c9bcc2'},   // 0
+  {bg:'#e4f6d9', fg:'#4a3f45'},   // 1 연두
+  {bg:'#c5ecd0', fg:'#4a3f45'},   // 2
+  {bg:'#b0e6e0', fg:'#4a3f45'},   // 3 민트
+  {bg:'#a8d8f5', fg:'#4a3f45'},   // 4 하늘
+  {bg:'#b5c4f7', fg:'#3d3a5c'},   // 5
+  {bg:'#c9b8f2', fg:'#3d3a5c'},   // 6 연보라
+  {bg:'#e0b4ec', fg:'#4a3a5c'},   // 7
+  {bg:'#f5a8d3', fg:'#5c2f48'},   // 8 분홍
+  {bg:'#f78fb3', fg:'#5c2038'},   // 9
+  {bg:'#e8577f', fg:'#ffffff'}    // 10+ 진분홍
 ];
 const colorOf = n => COLORS[Math.min(n, 10)];
 
@@ -213,20 +288,18 @@ BIBLE.forEach((b, i) => {
 // 범례
 (function() {
   const lg = $('legend');
-  lg.append('읽은 횟수: ');
+  lg.append('읽은 횟수 ');
   for (let i = 0; i <= 10; i++) {
     const s = document.createElement('span');
     s.className = 'sw';
     s.style.background = COLORS[i].bg;
-    s.style.color = COLORS[i].fg;
-    s.style.border = '1px solid rgba(0,0,0,.15)';
+    s.style.color = COLORS[i].fg === '#c9bcc2' ? '#9a8b92' : COLORS[i].fg;
     s.textContent = i === 10 ? '10+' : i;
     lg.appendChild(s);
   }
 })();
 
 // ===== 통계 계산 =====
-// 한 장: 읽은 절 수, 전체 절 수, 가장 적게 읽은 절의 횟수, 누적 횟수
 function chapterStats(b, ci) {
   const cnt = BIBLE[b][1][ci];
   let read = 0, min = Infinity, sum = 0;
@@ -238,7 +311,6 @@ function chapterStats(b, ci) {
   }
   return {read, total: cnt, min: min === Infinity ? 0 : min, sum};
 }
-// 한 권
 function bookStats(b) {
   let read = 0, total = 0, min = Infinity, sum = 0;
   BIBLE[b][1].forEach((_, ci) => {
@@ -254,7 +326,7 @@ function paint(el, n) {
   const c = colorOf(n);
   el.style.background = c.bg;
   el.style.color = c.fg;
-  el.querySelector('.c').textContent = n > 0 ? n + '회' : '';
+  el.querySelector('.c').textContent = n > 0 ? n : '';
 }
 
 function makeVerse(b, ci, v, onChange) {
@@ -299,7 +371,7 @@ function makeVerse(b, ci, v, onChange) {
 function renderBookSummary() {
   const s = bookStats(book);
   const pct = s.total ? Math.round(s.read / s.total * 100) : 0;
-  $('summary').textContent = `${BIBLE[book][0]}: ${s.read} / ${s.total}절 읽음 (${pct}%) · 누적 ${s.sum}회`;
+  $('summary').textContent = `${BIBLE[book][0]} · ${s.read}/${s.total}절 (${pct}%) · 누적 ${s.sum}회`;
   $('barFill').style.width = pct + '%';
 }
 
@@ -311,7 +383,7 @@ function refreshChapterHeader(ci) {
   if (jb) {
     const c = colorOf(s.min);
     jb.style.background = c.bg;
-    jb.style.color = c.fg;
+    jb.style.color = c.fg === '#c9bcc2' ? '#9a8b92' : c.fg;
   }
 }
 
@@ -323,7 +395,6 @@ function renderBook() {
   box.innerHTML = '';
 
   chapters.forEach((cnt, ci) => {
-    // 바로가기 버튼
     const jb = document.createElement('div');
     jb.className = 'jb';
     jb.id = 'jb-' + ci;
@@ -333,7 +404,6 @@ function renderBook() {
     };
     jump.appendChild(jb);
 
-    // 장 영역
     const sec = document.createElement('div');
     sec.className = 'chapter';
     sec.id = 'ch-' + ci;
@@ -364,15 +434,14 @@ function renderAll() {
     gRead += s.read; gTotal += s.total; gSum += s.sum;
     if (s.read === s.total) booksDone++;
     const pct = s.total ? Math.round(s.read / s.total * 100) : 0;
-    // 권 전체 색 = 그 권에서 가장 적게 읽은 절의 횟수
     const c = colorOf(s.min);
     const el = document.createElement('div');
     el.className = 'bk';
     el.style.background = c.bg;
-    el.style.color = c.fg;
+    el.style.color = c.fg === '#c9bcc2' ? '#4a3f45' : c.fg;
     el.innerHTML = `<div class="t">${b[0]}</div>` +
       `<div class="s">${pct}% · ${s.read}/${s.total}절</div>` +
-      `<div class="pb"><div style="width:${pct}%;${s.min === 0 ? 'background:#2e8b57' : ''}"></div></div>`;
+      `<div class="pb"><div style="width:${pct}%"></div></div>`;
     el.onclick = () => {
       book = bi;
       bookSel.value = bi;
@@ -385,11 +454,9 @@ function renderAll() {
   });
 
   const pct = gTotal ? (gRead / gTotal * 100) : 0;
-  $('totalBig').textContent = `성경 전체 ${pct.toFixed(1)}% 읽음`;
+  $('totalBig').textContent = `성경 전체 ${pct.toFixed(1)}% 읽었어요 ✨`;
   $('totalSub').textContent = `${gRead.toLocaleString()} / ${gTotal.toLocaleString()}절 · 완독한 권 ${booksDone}/66 · 누적 ${gSum.toLocaleString()}회`;
   $('totalBar').style.width = pct + '%';
-  $('totalBar').style.height = '100%';
-  $('totalBar').style.background = '#2e8b57';
 }
 
 function showTab(t) {
