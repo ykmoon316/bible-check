@@ -120,7 +120,19 @@
   .bk .pb { height: 7px; border-radius: 999px; background: rgba(0,0,0,.3); margin-top: 8px; overflow: hidden; }
   .bk .pb > div { height: 100%; border-radius: 999px; background: #ffd1e0; }
 
-  </style>
+  
+  /* 일괄 입력 창 */
+  dialog { border: none; border-radius: 24px; padding: 20px; width: min(340px, 92vw); box-shadow: 0 12px 40px rgba(0, 0, 0, .6); background: var(--card); color: var(--ink); font-family: inherit; }
+  dialog::backdrop { background: rgba(0, 0, 0, .55); }
+  dialog h3 { margin: 0 0 12px; font-size: 18px; }
+  dialog .lbl { font-size: 13px; color: var(--sub); margin: 12px 0 5px; }
+  dialog .pair { display: flex; gap: 6px; }
+  dialog select, dialog input { flex: 1; min-width: 0; max-width: none; width: 100%; font-family: inherit; font-size: 16px; padding: 9px 10px; border-radius: 14px; border: 2px solid var(--line); background: #1b1726; color: var(--ink); box-shadow: none; }
+  dialog .hint { font-size: 12px; color: var(--sub); margin-top: 12px; line-height: 1.5; min-height: 36px; }
+  dialog .row { display: flex; gap: 8px; margin-top: 14px; }
+  dialog .row button { flex: 1; box-shadow: none; }
+  dialog .ok { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -129,6 +141,7 @@
   <select id="bookSel"></select>
   <span class="spacer"></span>
   <button id="exportBtn" class="mini-btn">내보내기</button>
+  <button id="bulkBtn" class="mini-btn">일괄 입력</button>
   <button id="importBtn" class="mini-btn">불러오기</button>
   <input type="file" id="importFile" accept="application/json" style="display:none">
 </header>
@@ -162,6 +175,27 @@
   <div class="books" id="ntBooks"></div>
   <div class="bottom-space"></div>
 </div>
+
+<dialog id="bulkDlg">
+  <h3>📝 일괄 입력</h3>
+  <div class="lbl">시작 (이 장부터)</div>
+  <div class="pair">
+    <select id="bulkFromBook"></select>
+    <select id="bulkFromCh" style="max-width:90px"></select>
+  </div>
+  <div class="lbl">끝 (이 장까지 포함)</div>
+  <div class="pair">
+    <select id="bulkToBook"></select>
+    <select id="bulkToCh" style="max-width:90px"></select>
+  </div>
+  <div class="lbl">읽은 횟수 (0이면 이 범위 기록 지우기)</div>
+  <input type="number" id="bulkCount" min="0" inputmode="numeric" value="1">
+  <div class="hint" id="bulkHint"></div>
+  <div class="row">
+    <button id="bulkCancel">취소</button>
+    <button id="bulkOk" class="ok">적용</button>
+  </div>
+</dialog>
 
 <script>
 // ===== 개역한글 장별 절 수 (66권, 1,189장, 31,102절) =====
@@ -525,6 +559,93 @@ function showTab(t) {
   $('tabAll').classList.toggle('on', t === 'all');
   if (t === 'all') renderAll();
 }
+
+// ===== 일괄 입력 =====
+// 시작 장부터 끝 장까지(끝 장 포함) 모든 절을 입력한 횟수로 맞춘다. 0이면 그 범위의 기록을 지운다.
+const bulkEls = {
+  fromBook: $('bulkFromBook'), fromCh: $('bulkFromCh'),
+  toBook: $('bulkToBook'), toCh: $('bulkToCh'),
+  count: $('bulkCount'), hint: $('bulkHint')
+};
+function fillBookSelect(sel) {
+  BIBLE.forEach((b, i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = b[0];
+    sel.appendChild(o);
+  });
+}
+function fillChapterSelect(chSel, bookIdx, keep) {
+  const n = BIBLE[bookIdx][1].length;
+  chSel.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = (i + 1) + '장';
+    chSel.appendChild(o);
+  }
+  chSel.value = Math.min(keep || 0, n - 1);
+}
+// 범위 안의 모든 절 좌표를 순서대로 돌려준다
+function bulkRange() {
+  const fb = Number(bulkEls.fromBook.value), fc = Number(bulkEls.fromCh.value);
+  const tb = Number(bulkEls.toBook.value), tc = Number(bulkEls.toCh.value);
+  const list = [];
+  if (fb > tb || (fb === tb && fc > tc)) return null; // 시작이 끝보다 뒤
+  for (let b = fb; b <= tb; b++) {
+    const chs = BIBLE[b][1];
+    const c0 = b === fb ? fc : 0;
+    const c1 = b === tb ? tc : chs.length - 1;
+    for (let c = c0; c <= c1; c++) {
+      for (let v = 1; v <= chs[c]; v++) list.push([b, c, v]);
+    }
+  }
+  return list;
+}
+function updateBulkHint() {
+  const list = bulkRange();
+  const cnt = Math.max(0, parseInt(bulkEls.count.value, 10) || 0);
+  if (!list) { bulkEls.hint.textContent = '시작이 끝보다 뒤에 있어요. 순서를 확인해 주세요.'; return; }
+  const f = `${BIBLE[bulkEls.fromBook.value][0]} ${Number(bulkEls.fromCh.value) + 1}장`;
+  const t = `${BIBLE[bulkEls.toBook.value][0]} ${Number(bulkEls.toCh.value) + 1}장`;
+  bulkEls.hint.textContent = cnt === 0
+    ? `${f} ~ ${t} (${list.length.toLocaleString()}절)의 기록을 지웁니다.`
+    : `${f} ~ ${t} (${list.length.toLocaleString()}절)을 모두 ${cnt}회로 설정합니다. 기존 횟수는 덮어씁니다.`;
+}
+fillBookSelect(bulkEls.fromBook);
+fillBookSelect(bulkEls.toBook);
+fillChapterSelect(bulkEls.fromCh, 0, 0);
+fillChapterSelect(bulkEls.toCh, 0, 0);
+bulkEls.fromBook.onchange = () => { fillChapterSelect(bulkEls.fromCh, Number(bulkEls.fromBook.value), 0); updateBulkHint(); };
+bulkEls.toBook.onchange = () => { fillChapterSelect(bulkEls.toCh, Number(bulkEls.toBook.value), 0); updateBulkHint(); };
+[bulkEls.fromCh, bulkEls.toCh].forEach(s => s.onchange = updateBulkHint);
+bulkEls.count.oninput = updateBulkHint;
+
+$('bulkBtn').onclick = () => {
+  // 지금 보고 있는 권을 기본값으로
+  bulkEls.fromBook.value = book; bulkEls.toBook.value = book;
+  fillChapterSelect(bulkEls.fromCh, book, 0);
+  fillChapterSelect(bulkEls.toCh, book, BIBLE[book][1].length - 1);
+  bulkEls.count.value = 1;
+  updateBulkHint();
+  $('bulkDlg').showModal();
+};
+$('bulkCancel').onclick = () => $('bulkDlg').close();
+$('bulkOk').onclick = () => {
+  const list = bulkRange();
+  if (!list) { alert('시작이 끝보다 뒤에 있어요. 순서를 확인해 주세요.'); return; }
+  const cnt = Math.max(0, parseInt(bulkEls.count.value, 10) || 0);
+  const msg = cnt === 0
+    ? `${list.length.toLocaleString()}절의 기록을 지웁니다. 계속할까요?`
+    : `${list.length.toLocaleString()}절을 모두 ${cnt}회로 바꿉니다. 계속할까요?`;
+  if (!confirm(msg)) return;
+  list.forEach(([b, c, v]) => {
+    const key = k(b, c, v);
+    if (cnt <= 0) delete data[key]; else data[key] = cnt;
+  });
+  save(); // 한 번에 저장
+  $('bulkDlg').close();
+  renderBook();
+  if ($('allView').style.display !== 'none') renderAll();
+};
 
 // ===== 이벤트 =====
 bookSel.onchange = () => {
