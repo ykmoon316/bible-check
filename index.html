@@ -120,14 +120,7 @@
   .bk .pb { height: 7px; border-radius: 999px; background: rgba(0,0,0,.3); margin-top: 8px; overflow: hidden; }
   .bk .pb > div { height: 100%; border-radius: 999px; background: #ffd1e0; }
 
-  /* 숫자 입력 창 */
-  dialog { border: none; border-radius: 24px; padding: 22px; width: 300px; box-shadow: 0 12px 40px rgba(0, 0, 0, .6); background: var(--card); color: var(--ink); font-family: inherit; }
-  dialog::backdrop { background: rgba(0, 0, 0, .55); }
-  dialog input { width: 100%; font-family: inherit; font-size: 26px; padding: 10px; text-align: center; margin: 12px 0; border-radius: 16px; border: 2px solid var(--line); background: #1b1726; color: var(--ink); }
-  dialog .row { display: flex; gap: 8px; }
-  dialog .row button { flex: 1; }
-  dialog .ok { background: var(--accent); border-color: var(--accent); color: #fff; }
-</style>
+  </style>
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -169,15 +162,6 @@
   <div class="books" id="ntBooks"></div>
   <div class="bottom-space"></div>
 </div>
-
-<dialog id="dlg">
-  <div id="dlgTitle"></div>
-  <input type="number" id="dlgInput" min="0" inputmode="numeric">
-  <div class="row">
-    <button id="dlgCancel">취소</button>
-    <button id="dlgOk" class="ok">확인</button>
-  </div>
-</dialog>
 
 <script>
 // ===== 개역한글 장별 절 수 (66권, 1,189장, 31,102절) =====
@@ -345,7 +329,7 @@ function makeVerse(b, ci, v) {
 }
 
 // ===== 쓸어서 여러 칸 체크 =====
-// 톡 누르기: 1회 추가 / 길게 누르기: 숫자 입력 / 쓸기: 지나간 칸마다 1회 추가(한 번 쓸 때 칸당 한 번)
+// 톡 누르기: 1회 추가 / 길게 누르기: 1회 차감 / 쓸기: 지나간 칸마다 1회 추가(한 번 쓸 때 칸당 한 번)
 (function setupSwipe() {
   const root = document.getElementById('chapters');
   let down = false, moved = false, long = false, timer = null;
@@ -391,12 +375,13 @@ function makeVerse(b, ci, v) {
       if (moved) return;
       long = true;
       const b = Number(el.dataset.b), ci = Number(el.dataset.ci), v = Number(el.dataset.v);
-      openDialog(`${BIBLE[b][0]} ${ci + 1}:${v}`, getCount(b, ci, v), n => {
-        setCount(b, ci, v, n);
-        paint(el, n);
-        refreshChapterHeader(ci);
-        renderBookSummary();
-      });
+      // 길게 누르면 그 칸의 횟수를 1회 차감(0 아래로는 내려가지 않음)
+      const n = Math.max(0, getCount(b, ci, v) - 1);
+      setCount(b, ci, v, n);
+      paint(el, n);
+      refreshChapterHeader(ci);
+      renderBookSummary();
+      if (navigator.vibrate) navigator.vibrate(15);
     }, 500);
     return true;
   }
@@ -540,22 +525,6 @@ function showTab(t) {
   $('tabAll').classList.toggle('on', t === 'all');
   if (t === 'all') renderAll();
 }
-
-// ===== 숫자 입력 창 =====
-let dlgCb = null;
-function openDialog(title, cur, cb) {
-  $('dlgTitle').textContent = title + ' 읽은 횟수 (0이면 해제)';
-  $('dlgInput').value = cur;
-  dlgCb = cb;
-  $('dlg').showModal();
-  setTimeout(() => $('dlgInput').select(), 50);
-}
-$('dlgCancel').onclick = () => $('dlg').close();
-$('dlgOk').onclick = () => {
-  const n = Math.max(0, parseInt($('dlgInput').value, 10) || 0);
-  $('dlg').close();
-  if (dlgCb) dlgCb(n);
-};
 
 // ===== 이벤트 =====
 bookSel.onchange = () => {
