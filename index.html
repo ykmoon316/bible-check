@@ -4,18 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#fff4f0">
+<meta name="theme-color" content="#1b1726">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>성경 읽기 체크</title>
 <style>
   :root {
-    --bg: #fff8f3;
-    --card: #ffffff;
-    --ink: #4a3f45;
-    --sub: #9a8b92;
-    --line: #f3e3dc;
-    --accent: #ff9eb5;
-    --accent2: #ffc9a8;
-    --shadow: 0 3px 10px rgba(255, 158, 181, .18);
+    color-scheme: dark;
+    --bg: #1b1726;
+    --card: #272138;
+    --ink: #f1e9f5;
+    --sub: #a89bb8;
+    --line: #3a3150;
+    --accent: #ff8fb1;
+    --accent2: #ffc09f;
+    --shadow: 0 4px 14px rgba(0, 0, 0, .35);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -28,7 +31,7 @@
   /* 상단 */
   header {
     position: sticky; top: 0; z-index: 5;
-    background: rgba(255, 248, 243, .94);
+    background: rgba(27, 23, 38, .94);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     border-bottom: 2px dashed var(--line);
     padding: 10px 14px;
@@ -58,18 +61,18 @@
   .legend .sw {
     display: inline-block; min-width: 24px; height: 18px; padding: 0 4px;
     border-radius: 999px; text-align: center; font-size: 11px; line-height: 17px;
-    border: 1px solid rgba(0,0,0,.08);
+    border: 1px solid rgba(255,255,255,.12);
   }
 
   .summary { padding: 12px 16px 6px; font-size: 15px; }
-  .bar { height: 12px; background: #ffe9e2; border-radius: 999px; margin: 0 16px; overflow: hidden; }
+  .bar { height: 12px; background: #3a3150; border-radius: 999px; margin: 0 16px; overflow: hidden; }
   .bar > div { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ffc9a8, #ff9eb5); transition: width .35s; }
 
   /* 장 바로가기 */
   .jump { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 14px 0; }
   .jb {
     min-width: 34px; height: 30px; padding: 0 8px; border-radius: 999px;
-    border: 1.5px solid rgba(0,0,0,.08); font-size: 13px;
+    border: 1.5px solid rgba(255,255,255,.1); font-size: 13px;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
 
@@ -87,9 +90,9 @@
   .verses { display: grid; grid-template-columns: repeat(auto-fill, 38px); gap: 5px; }
   .v {
     width: 38px; height: 38px; border-radius: 12px;
-    border: 1.5px solid rgba(0,0,0,.07);
+    border: 1.5px solid rgba(255,255,255,.08);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none;
     transition: transform .08s;
   }
   .v:active { transform: scale(.88); }
@@ -100,27 +103,27 @@
   /* 전체 현황 */
   .total {
     margin: 14px 12px 0; padding: 16px; border-radius: 22px; text-align: center;
-    background: linear-gradient(135deg, #ffe3ec, #ffeede); box-shadow: var(--shadow);
+    background: linear-gradient(135deg, #3b2a4d, #3d2d3f); box-shadow: var(--shadow);
   }
   .total .big { font-size: 24px; }
   .total .sub { font-size: 13px; color: var(--sub); margin-top: 4px; }
-  .total .bar { margin: 12px 0 0; background: rgba(255,255,255,.7); }
+  .total .bar { margin: 12px 0 0; background: rgba(0,0,0,.3); }
   .group-title { padding: 18px 18px 0; font-size: 17px; }
   .books { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 10px 12px 14px; }
   .bk {
     border-radius: 18px; padding: 11px 12px; cursor: pointer;
-    border: 1.5px solid rgba(0,0,0,.07); box-shadow: var(--shadow);
+    border: 1.5px solid rgba(255,255,255,.1); box-shadow: var(--shadow);
   }
   .bk:active { transform: scale(.97); }
   .bk .t { font-size: 15px; }
   .bk .s { font-size: 11px; margin-top: 3px; opacity: .85; }
-  .bk .pb { height: 7px; border-radius: 999px; background: rgba(0,0,0,.1); margin-top: 8px; overflow: hidden; }
-  .bk .pb > div { height: 100%; border-radius: 999px; background: #ff9eb5; }
+  .bk .pb { height: 7px; border-radius: 999px; background: rgba(0,0,0,.3); margin-top: 8px; overflow: hidden; }
+  .bk .pb > div { height: 100%; border-radius: 999px; background: #ffd1e0; }
 
   /* 숫자 입력 창 */
-  dialog { border: none; border-radius: 24px; padding: 22px; width: 300px; box-shadow: 0 12px 40px rgba(120, 80, 90, .3); background: var(--card); color: var(--ink); font-family: inherit; }
-  dialog::backdrop { background: rgba(74, 63, 69, .35); }
-  dialog input { width: 100%; font-family: inherit; font-size: 26px; padding: 10px; text-align: center; margin: 12px 0; border-radius: 16px; border: 2px solid var(--line); color: var(--ink); }
+  dialog { border: none; border-radius: 24px; padding: 22px; width: 300px; box-shadow: 0 12px 40px rgba(0, 0, 0, .6); background: var(--card); color: var(--ink); font-family: inherit; }
+  dialog::backdrop { background: rgba(0, 0, 0, .55); }
+  dialog input { width: 100%; font-family: inherit; font-size: 26px; padding: 10px; text-align: center; margin: 12px 0; border-radius: 16px; border: 2px solid var(--line); background: #1b1726; color: var(--ink); }
   dialog .row { display: flex; gap: 8px; }
   dialog .row button { flex: 1; }
   dialog .ok { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -250,17 +253,17 @@ const OT_COUNT = 39;
 
 // ===== 파스텔 색상: 0회=흰색, 1~10회, 10회 이상은 같은 색 =====
 const COLORS = [
-  {bg:'#ffffff', fg:'#c9bcc2'},   // 0
-  {bg:'#e4f6d9', fg:'#4a3f45'},   // 1 연두
-  {bg:'#c5ecd0', fg:'#4a3f45'},   // 2
-  {bg:'#b0e6e0', fg:'#4a3f45'},   // 3 민트
-  {bg:'#a8d8f5', fg:'#4a3f45'},   // 4 하늘
-  {bg:'#b5c4f7', fg:'#3d3a5c'},   // 5
-  {bg:'#c9b8f2', fg:'#3d3a5c'},   // 6 연보라
-  {bg:'#e0b4ec', fg:'#4a3a5c'},   // 7
-  {bg:'#f5a8d3', fg:'#5c2f48'},   // 8 분홍
-  {bg:'#f78fb3', fg:'#5c2038'},   // 9
-  {bg:'#e8577f', fg:'#ffffff'}    // 10+ 진분홍
+  {bg:'#332c47', fg:'#8f84a6'},   // 0 안 읽음 (어두운 보라 회색)
+  {bg:'#4a7a5c', fg:'#f1fff5'},   // 1 연두
+  {bg:'#3f8a74', fg:'#f1fff9'},   // 2
+  {bg:'#2f8f95', fg:'#effcff'},   // 3 민트
+  {bg:'#3a86c4', fg:'#f0f8ff'},   // 4 하늘
+  {bg:'#5a79d6', fg:'#f3f5ff'},   // 5
+  {bg:'#7b6bd9', fg:'#f6f3ff'},   // 6 보라
+  {bg:'#9a62d0', fg:'#faf2ff'},   // 7
+  {bg:'#c457a8', fg:'#fff1fa'},   // 8 분홍
+  {bg:'#e0558f', fg:'#fff0f6'},   // 9
+  {bg:'#ff7aa2', fg:'#2a1020'}    // 10+ 밝은 핑크 (가장 눈에 띄게)
 ];
 const colorOf = n => COLORS[Math.min(n, 10)];
 
@@ -293,7 +296,7 @@ BIBLE.forEach((b, i) => {
     const s = document.createElement('span');
     s.className = 'sw';
     s.style.background = COLORS[i].bg;
-    s.style.color = COLORS[i].fg === '#c9bcc2' ? '#9a8b92' : COLORS[i].fg;
+    s.style.color = COLORS[i].fg;
     s.textContent = i === 10 ? '10+' : i;
     lg.appendChild(s);
   }
@@ -329,44 +332,118 @@ function paint(el, n) {
   el.querySelector('.c').textContent = n > 0 ? n : '';
 }
 
-function makeVerse(b, ci, v, onChange) {
+// 칸은 모양만 만든다. 터치는 아래 '쓸어서 체크' 처리가 한 곳에서 받는다.
+function makeVerse(b, ci, v) {
   const el = document.createElement('div');
   el.className = 'v';
+  el.dataset.b = b;
+  el.dataset.ci = ci;
+  el.dataset.v = v;
   el.innerHTML = `<div class="n">${v}</div><div class="c"></div>`;
   paint(el, getCount(b, ci, v));
+  return el;
+}
 
-  let timer = null, long = false;
-  const start = () => {
-    long = false;
+// ===== 쓸어서 여러 칸 체크 =====
+// 톡 누르기: 1회 추가 / 길게 누르기: 숫자 입력 / 쓸기: 지나간 칸마다 1회 추가(한 번 쓸 때 칸당 한 번)
+(function setupSwipe() {
+  const root = document.getElementById('chapters');
+  let down = false, moved = false, long = false, timer = null;
+  let startEl = null, startX = 0, startY = 0, lastEl = null;
+  let touched = new Set();
+  const MOVE_LIMIT = 10; // 이만큼 움직이면 쓸기로 본다(px)
+
+  const verseAt = (x, y) => {
+    const el = document.elementFromPoint(x, y);
+    return el && el.closest ? el.closest('.v') : null;
+  };
+  const idOf = el => `${el.dataset.b}.${el.dataset.ci}.${el.dataset.v}`;
+
+  function bump(el) {
+    const id = idOf(el);
+    if (touched.has(id)) return;
+    touched.add(id);
+    const b = Number(el.dataset.b), ci = Number(el.dataset.ci), v = Number(el.dataset.v);
+    const n = getCount(b, ci, v) + 1;
+    setCount(b, ci, v, n);
+    paint(el, n);
+    refreshChapterHeader(ci);
+    renderBookSummary();
+  }
+
+  // 시작 칸과 끝 칸 사이에 빠르게 지나간 칸도 놓치지 않도록 순서대로 채운다
+  function bumpBetween(a, z) {
+    const all = Array.from(root.querySelectorAll('.v'));
+    const i = all.indexOf(a), j = all.indexOf(z);
+    if (i < 0 || j < 0) { bump(z); return; }
+    const lo = Math.min(i, j), hi = Math.max(i, j);
+    for (let k = lo; k <= hi; k++) bump(all[k]);
+  }
+
+  function begin(x, y) {
+    const el = verseAt(x, y);
+    if (!el) return false;
+    down = true; moved = false; long = false;
+    startEl = el; lastEl = el; startX = x; startY = y;
+    touched = new Set();
+    clearTimeout(timer);
     timer = setTimeout(() => {
+      if (moved) return;
       long = true;
+      const b = Number(el.dataset.b), ci = Number(el.dataset.ci), v = Number(el.dataset.v);
       openDialog(`${BIBLE[b][0]} ${ci + 1}:${v}`, getCount(b, ci, v), n => {
         setCount(b, ci, v, n);
         paint(el, n);
-        onChange();
+        refreshChapterHeader(ci);
+        renderBookSummary();
       });
     }, 500);
-  };
-  const end = () => {
-    clearTimeout(timer);
-    if (!long) {
-      const n = getCount(b, ci, v) + 1;
-      setCount(b, ci, v, n);
-      paint(el, n);
-      onChange();
-    }
-  };
-  const cancel = () => { clearTimeout(timer); long = true; };
+    return true;
+  }
 
-  el.addEventListener('touchstart', e => { e.preventDefault(); start(); }, {passive: false});
-  el.addEventListener('touchend', e => { e.preventDefault(); end(); });
-  el.addEventListener('touchmove', cancel);
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', end);
-  el.addEventListener('mouseleave', cancel);
-  el.addEventListener('contextmenu', e => e.preventDefault());
-  return el;
-}
+  function move(x, y) {
+    if (!down || long) return;
+    if (!moved) {
+      if (Math.abs(x - startX) + Math.abs(y - startY) < MOVE_LIMIT) return;
+      moved = true;
+      clearTimeout(timer);
+      bump(startEl); // 쓸기가 시작되면 처음 칸도 체크
+    }
+    const el = verseAt(x, y);
+    if (el && el !== lastEl) {
+      bumpBetween(lastEl, el);
+      lastEl = el;
+    }
+  }
+
+  function finish() {
+    if (!down) return;
+    clearTimeout(timer);
+    if (!moved && !long) bump(startEl); // 그냥 톡 누른 경우
+    down = false; moved = false; long = false;
+    startEl = null; lastEl = null;
+  }
+
+  // 아이패드(터치)
+  root.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    if (begin(t.clientX, t.clientY)) e.preventDefault();
+  }, {passive: false});
+  root.addEventListener('touchmove', e => {
+    if (!down) return;
+    e.preventDefault(); // 쓸 때는 화면이 스크롤되지 않게
+    const t = e.touches[0];
+    move(t.clientX, t.clientY);
+  }, {passive: false});
+  root.addEventListener('touchend', e => { if (down) { e.preventDefault(); finish(); } }, {passive: false});
+  root.addEventListener('touchcancel', finish);
+
+  // 마우스(컴퓨터에서 확인할 때)
+  root.addEventListener('mousedown', e => { begin(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', e => { if (down) move(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', finish);
+  root.addEventListener('contextmenu', e => e.preventDefault());
+})();
 
 function renderBookSummary() {
   const s = bookStats(book);
@@ -383,7 +460,7 @@ function refreshChapterHeader(ci) {
   if (jb) {
     const c = colorOf(s.min);
     jb.style.background = c.bg;
-    jb.style.color = c.fg === '#c9bcc2' ? '#9a8b92' : c.fg;
+    jb.style.color = c.fg;
   }
 }
 
@@ -411,10 +488,7 @@ function renderBook() {
     const grid = document.createElement('div');
     grid.className = 'verses';
     for (let v = 1; v <= cnt; v++) {
-      grid.appendChild(makeVerse(book, ci, v, () => {
-        refreshChapterHeader(ci);
-        renderBookSummary();
-      }));
+      grid.appendChild(makeVerse(book, ci, v));
     }
     sec.appendChild(grid);
     box.appendChild(sec);
@@ -438,7 +512,7 @@ function renderAll() {
     const el = document.createElement('div');
     el.className = 'bk';
     el.style.background = c.bg;
-    el.style.color = c.fg === '#c9bcc2' ? '#4a3f45' : c.fg;
+    el.style.color = c.fg;
     el.innerHTML = `<div class="t">${b[0]}</div>` +
       `<div class="s">${pct}% · ${s.read}/${s.total}절</div>` +
       `<div class="pb"><div style="width:${pct}%"></div></div>`;
