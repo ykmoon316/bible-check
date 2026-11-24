@@ -552,17 +552,21 @@ function renderBookSummary() {
   const s = bookStats(book);
   const name = BIBLE[book][0];
   const rounds = s.completedRounds;
-  const targetRound = rounds + 1;
-  const pct = s.total ? Math.round(s.currentRoundRead / s.total * 100) : 0;
   
-  let label = `${name}`;
-  if (rounds > 0) {
-    label += ` [${rounds}독 완독 ✨]`;
-    $('summary').textContent = `${label} · ${targetRound}독째 ${s.currentRoundRead}/${s.total}절 (${pct}%) · 누적 ${s.sum}회`;
+  if (rounds > 0 && s.currentRoundRead === 0) {
+    // 직전 회독을 딱 100% 채운 완료 상태 유지
+    $('summary').textContent = `${name} [${rounds}독 완독 ✨] · ${s.total}/${s.total}절 (100%) · 누적 ${s.sum}회`;
+    $('barFill').style.width = '100%';
   } else {
-    $('summary').textContent = `${label} · ${s.currentRoundRead}/${s.total}절 (${pct}%) · 누적 ${s.sum}회`;
+    const targetRound = rounds + 1;
+    const pct = s.total ? Math.round(s.currentRoundRead / s.total * 100) : 0;
+    if (rounds > 0) {
+      $('summary').textContent = `${name} [${rounds}독] · ${targetRound}독째 ${s.currentRoundRead}/${s.total}절 (${pct}%) · 누적 ${s.sum}회`;
+    } else {
+      $('summary').textContent = `${name} · ${s.currentRoundRead}/${s.total}절 (${pct}%) · 누적 ${s.sum}회`;
+    }
+    $('barFill').style.width = pct + '%';
   }
-  $('barFill').style.width = pct + '%';
 }
 
 function refreshChapterHeader(ci) {
@@ -632,10 +636,16 @@ function renderAll() {
     }
 
     let statusText = '';
-    if (rounds > 0) {
+    let barWidth = 0;
+    if (rounds > 0 && s.currentRoundRead === 0) {
+      statusText = `100% · ${s.total}/${s.total}절 완독`;
+      barWidth = 100;
+    } else if (rounds > 0) {
       statusText = `${targetRound}독째 ${pct}% (${s.currentRoundRead}/${s.total}절)`;
+      barWidth = pct;
     } else {
       statusText = `${pct}% · ${s.read}/${s.total}절`;
+      barWidth = pct;
     }
 
     const el = document.createElement('div');
@@ -644,7 +654,7 @@ function renderAll() {
     el.style.color = c.fg;
     el.innerHTML = `<div class="t">${titleText}</div>` +
       `<div class="s">${statusText}</div>` +
-      `<div class="pb"><div style="width:${pct}%"></div></div>`;
+      `<div class="pb"><div style="width:${barWidth}%"></div></div>`;
     el.onclick = () => {
       book = bi;
       bookSel.value = bi;
