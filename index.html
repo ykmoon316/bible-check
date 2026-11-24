@@ -617,6 +617,7 @@ function renderBook() {
 // ===== 전체 현황 =====
 function renderAll() {
   let gRead = 0, gTotal = 0, gSum = 0, booksDone = 0;
+  let globalMin = Infinity;
   const ot = $('otBooks'), nt = $('ntBooks');
   ot.innerHTML = ''; nt.innerHTML = '';
 
@@ -624,6 +625,7 @@ function renderAll() {
     const s = bookStats(bi);
     gRead += s.read; gTotal += s.total; gSum += s.sum;
     if (s.completedRounds > 0) booksDone++;
+    if (s.completedRounds < globalMin) globalMin = s.completedRounds;
 
     const rounds = s.completedRounds;
     const targetRound = rounds + 1;
@@ -666,10 +668,38 @@ function renderAll() {
     (bi < OT_COUNT ? ot : nt).appendChild(el);
   });
 
-  const pct = gTotal ? (gRead / gTotal * 100) : 0;
-  $('totalBig').textContent = `성경 전체 ${pct.toFixed(1)}% 읽었어요 ✨`;
-  $('totalSub').textContent = `${gRead.toLocaleString()} / ${gTotal.toLocaleString()}절 · 1독 이상 완독 ${booksDone}/66 · 누적 ${gSum.toLocaleString()}회`;
-  $('totalBar').style.width = pct + '%';
+  // 성경 66권 전체 기준 통독 회차 계산
+  const globalCompleted = globalMin === Infinity ? 0 : globalMin;
+  let globalCurrentRoundRead = 0;
+  BIBLE.forEach((b, bi) => {
+    b[1].forEach((cnt, ci) => {
+      for (let v = 1; v <= cnt; v++) {
+        if (getCount(bi, ci, v) > globalCompleted) globalCurrentRoundRead++;
+      }
+    });
+  });
+
+  let totalPct = 0;
+  let totalBarWidth = 0;
+  if (globalCompleted > 0 && globalCurrentRoundRead === 0) {
+    // 딱 N독 완독을 끝낸 100% 상태
+    totalPct = 100;
+    totalBarWidth = 100;
+    $('totalBig').textContent = `성경 전체 ${globalCompleted}독 완독했어요! ✨`;
+    $('totalSub').textContent = `${gTotal.toLocaleString()} / ${gTotal.toLocaleString()}절 · 완독한 권 ${booksDone}/66 · 누적 ${gSum.toLocaleString()}회`;
+  } else if (globalCompleted > 0) {
+    const nextRound = globalCompleted + 1;
+    totalPct = gTotal ? (globalCurrentRoundRead / gTotal * 100) : 0;
+    totalBarWidth = totalPct;
+    $('totalBig').textContent = `성경 ${nextRound}독째 ${totalPct.toFixed(1)}% 읽었어요 ✨`;
+    $('totalSub').textContent = `${nextRound}독째 ${globalCurrentRoundRead.toLocaleString()} / ${gTotal.toLocaleString()}절 · ${globalCompleted}독 이상 완독 ${booksDone}/66 · 누적 ${gSum.toLocaleString()}회`;
+  } else {
+    totalPct = gTotal ? (gRead / gTotal * 100) : 0;
+    totalBarWidth = totalPct;
+    $('totalBig').textContent = `성경 전체 ${totalPct.toFixed(1)}% 읽었어요 ✨`;
+    $('totalSub').textContent = `${gRead.toLocaleString()} / ${gTotal.toLocaleString()}절 · 완독한 권 ${booksDone}/66 · 누적 ${gSum.toLocaleString()}회`;
+  }
+  $('totalBar').style.width = totalBarWidth + '%';
 }
 
 function showTab(t) {
