@@ -140,10 +140,9 @@
   <h1>🌸 성경 읽기 체크</h1>
   <select id="bookSel"></select>
   <span class="spacer"></span>
-  <button id="exportBtn" class="mini-btn">내보내기</button>
   <button id="bulkBtn" class="mini-btn">일괄 입력</button>
-  <button id="importBtn" class="mini-btn">불러오기</button>
-  <input type="file" id="importFile" accept="application/json" style="display:none">
+  <button id="authBtn" class="mini-btn">구글 로그인</button>
+  <span id="syncStatus" style="font-size:12px; color:var(--sub); margin-left:4px;"></span>
 </header>
 
 <div class="tabs">
@@ -197,7 +196,39 @@
   </div>
 </dialog>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// Firebase 설정
+const firebaseConfig = {
+  apiKey: "AIzaSyD-scjfJk-FbbE4VVxIKLOMlaxyZ0Sh84Y",
+  authDomain: "bible-check-cdfa3.firebaseapp.com",
+  projectId: "bible-check-cdfa3",
+  storageBucket: "bible-check-cdfa3.firebasestorage.app",
+  messagingSenderId: "58115637539",
+  appId: "1:58115637539:web:099c8940eb27919a2e0c96"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let unsubscribeSnapshot = null;
+let isRemoteUpdating = false;
+let syncTimer = null;
+
+const syncStatusEl = document.getElementById('syncStatus');
+const authBtn = document.getElementById('authBtn');
+
+function setStatus(text, color = 'var(--sub)') {
+  if (!syncStatusEl) return;
+  syncStatusEl.textContent = text;
+  syncStatusEl.style.color = color;
+}
 // ===== 개역한글 장별 절 수 (66권, 1,189장, 31,102절) =====
 const BIBLE = [
 ["창세기",[31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26]],
@@ -285,10 +316,33 @@ const COLORS = [
 ];
 const colorOf = n => COLORS[Math.min(n, 10)];
 
-// ===== 저장소 (기존 기록 그대로 사용) =====
+// ===== 저장소 (기존 기록 + Firebase 동기화) =====
 const KEY = 'bibleReadingChecks_v1';
 let data = JSON.parse(localStorage.getItem(KEY) || '{}');
-const save = () => localStorage.setItem(KEY, JSON.stringify(data));
+
+function scheduleCloudSync() {
+  if (!currentUser || isRemoteUpdating) return;
+  setStatus('☁️ 저장 중...', '#ffc09f');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      await setDoc(userDocRef, {
+        checks: data,
+        updatedAt: Date.now()
+      }, { merge: true });
+      setStatus('☁️ 저장 완료', '#94d82d');
+    } catch (err) {
+      console.error('동기화 오류:', err);
+      setStatus('⚠️ 저장 실패', '#ff8787');
+    }
+  }, 1000);
+}
+
+const save = () => {
+  localStorage.setItem(KEY, JSON.stringify(data));
+  scheduleCloudSync();
+};
 const k = (b, c, v) => `${b}.${c}.${v}`;
 const getCount = (b, c, v) => data[k(b, c, v)] || 0;
 function setCount(b, c, v, n) {
@@ -658,31 +712,61 @@ bookSel.onchange = () => {
 $('tabBook').onclick = () => { showTab('book'); };
 $('tabAll').onclick = () => { showTab('all'); };
 
-// 내보내기 / 불러오기
-$('exportBtn').onclick = () => {
-  const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'bible-check-backup.json';
-  a.click();
-};
-$('importBtn').onclick = () => $('importFile').click();
-$('importFile').onchange = e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
+// 구글 로그인 및 실시간 동기화 리스너
+authBtn.onclick = async () => {
+  if (currentUser) {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      await signOut(auth);
+    }
+  } else {
     try {
-      const obj = JSON.parse(r.result);
-      if (confirm('현재 기록을 이 파일의 내용으로 바꿉니다. 계속할까요?')) {
-        data = obj; save(); renderBook();
-        if ($('allView').style.display !== 'none') renderAll();
-      }
-    } catch (err) { alert('파일을 읽을 수 없습니다.'); }
-  };
-  r.readAsText(f);
-  e.target.value = '';
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error('로그인 실패:', err);
+      alert('로그인에 실패했습니다. 승인된 도메인을 확인해 주세요.');
+    }
+  }
 };
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (unsubscribeSnapshot) {
+    unsubscribeSnapshot();
+    unsubscribeSnapshot = null;
+  }
+
+  if (user) {
+    authBtn.textContent = '로그아웃';
+    setStatus('☁️ 동기화 중...', '#ffc09f');
+    const userDocRef = doc(db, 'users', user.uid);
+
+    // 실시간 구독: 다른 기기(폰/패드)에서 체크하면 즉시 화면에 자동 반영
+    unsubscribeSnapshot = onSnapshot(userDocRef, docSnap => {
+      if (docSnap.exists()) {
+        const cloudData = docSnap.data().checks || {};
+        // 로컬 데이터와 클라우드 데이터 병합
+        const merged = { ...data, ...cloudData };
+        isRemoteUpdating = true;
+        data = merged;
+        localStorage.setItem(KEY, JSON.stringify(data));
+        isRemoteUpdating = false;
+
+        renderBook();
+        if ($('allView').style.display !== 'none') renderAll();
+        setStatus('☁️ 동기화됨', '#94d82d');
+      } else {
+        // 클라우드에 아직 기록이 없으면 현재 로컬 기록을 클라우드로 최초 업로드
+        scheduleCloudSync();
+      }
+    }, err => {
+      console.error('실시간 동기화 오류:', err);
+      setStatus('⚠️ 동기화 오류', '#ff8787');
+    });
+  } else {
+    authBtn.textContent = '구글 로그인';
+    setStatus('');
+  }
+});
 
 // 시작
 bookSel.value = book;
